@@ -413,11 +413,11 @@
 </head>
 <body>
 
-  <!-- 首次点击遮罩：浏览器拦截自动播放时的降级方案 -->
-  <div class="start-overlay" id="startOverlay">
+  <!-- 首次点击遮罩：手机浏览器必须用户手动点一下才能播 -->
+  <div class="start-overlay" id="startOverlay" onclick="event.stopPropagation(); document.getElementById('bgMusic').play().then(()=>{this.classList.add('hidden');document.getElementById('musicBtn').classList.add('playing');}).catch(()=>{this.querySelector('.start-text').textContent='加载中…稍等再点';});">
     <div class="start-emoji">🎵</div>
-    <div class="start-text">点 击 开 始</div>
-    <div class="start-sub">起风了 · 买辣椒也用券</div>
+    <div class="start-text">点 击 开 始 播 放</div>
+    <div class="start-sub">起风了 · 买辣椒也用券 · <span id="loadHint">点击后等几秒加载</span></div>
   </div>
 
   <!-- 鼠标跟随光晕 -->
@@ -426,10 +426,9 @@
   <!-- 音乐按钮 -->
   <button class="music-btn" id="musicBtn" title="音乐">♪</button>
 
-  <!-- 背景音乐：把起风了MP3放到同目录下，改src名字即可 -->
-  <audio id="bgMusic" preload="auto" loop>
+  <!-- 背景音乐：playsinline是iOS必须的，preload=none省流量 -->
+  <audio id="bgMusic" preload="none" loop playsinline webkit-playsinline>
     <source src="qifengle.mp3" type="audio/mpeg">
-    你的浏览器不支持音频播放
   </audio>
 
   <!-- ==========================================
@@ -731,7 +730,7 @@
     }
 
     /* =========================================================
-     * 7. 背景音乐（起风了 · <audio>标签播放本地MP3）
+     * 7. 背景音乐（起风了 · 手机端必须用户主动点击才能播）
      * ========================================================= */
     let musicPlaying = true;
     const musicBtn = document.getElementById('musicBtn');
@@ -739,57 +738,35 @@
     const startOverlay = document.getElementById('startOverlay');
 
     function updateUI() { musicBtn.classList.toggle('playing', musicPlaying); }
-
-    function start() {
-      bgMusic.play().then(() => {
-        musicPlaying = true; updateUI();
-        startOverlay.classList.add('hidden'); // 播放成功，隐藏遮罩
-      }).catch(() => {
-        musicPlaying = true; updateUI();
-        startOverlay.classList.remove('hidden'); // 失败了，显示遮罩提示点击
-      });
-    }
-
-    function stop() {
-      bgMusic.pause();
-      musicPlaying = false; updateUI();
-    }
-
-    // 页面加载时尝试自动播放
     bgMusic.volume = 0.3;
     updateUI();
+
+    // 桌面端尝试自动播放（大概率被拦）
     bgMusic.play().then(() => {
-      // 自动播放成功！
       updateUI();
       startOverlay.classList.add('hidden');
-      // 从头开始放
-      bgMusic.currentTime = 0;
     }).catch(() => {
-      // 浏览器拦截了自动播放 → 显示"点击开始"遮罩
-      musicPlaying = true; updateUI();
-      startOverlay.classList.remove('hidden');
+      // 被拦：遮罩保持可见，用户点了才能播
     });
 
-    // 点击页面任意位置（包括遮罩）：隐藏遮罩 + 开始播放
-    document.addEventListener('click', () => {
-      startOverlay.classList.add('hidden');
-      if (bgMusic.paused && musicPlaying) {
-        bgMusic.play().then(() => updateUI()).catch(() => {});
-      }
-    });
-
-    // 音乐按钮手动切换
+    // 音乐按钮手动开关
     musicBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      startOverlay.classList.add('hidden');
       if (musicPlaying) {
-        stop();
+        bgMusic.pause();
+        musicPlaying = false; updateUI();
       } else {
-        start();
+        startOverlay.classList.add('hidden');
+        bgMusic.play().then(() => { musicPlaying = true; updateUI(); }).catch(() => {});
       }
     });
+    // 手机端touch事件
+    musicBtn.addEventListener('touchend', (e) => {
+      e.stopPropagation(); e.preventDefault();
+      musicBtn.click();
+    });
 
-    // 歌曲播完自动循环
+    // 歌曲播完循环
     bgMusic.addEventListener('ended', () => {
       bgMusic.currentTime = 0;
       if (musicPlaying) bgMusic.play();
