@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>六一快乐 · 今天准许你装嫩</title>
+  <style>
+    /* =========================================================
+     * CSS变量：改颜色只需改这里，全局生效
+     * ========================================================= */
+    :root {
+      --bg-deep: #0a0e17;
+      --bg-card: #111620;
+      --gold: #c9a96e;
+      --gold-dim: rgba(201, 169, 110, 0.3);
+      --text-primary: #e8e4dd;
+      --text-secondary: #8b8680;
+      --text-muted: #5a5652;
+      --border: rgba(255,255,255,0.06);
+      /* 鼠标位置变量，JS 动态更新，用于多处光效 */
+      --mouse-x: 0.5;
+      --mouse-y: 0.5;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ============ 页面主体 ============ */
+    body {
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      /* 不再 overflow:hidden，允许滚动 */
+    }
+
+    /* ============ 全局鼠标跟随光晕层 ============ */
+    .cursor-glow {
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,169,110,0.06) 0%, transparent 70%);
+      /* 初始位置用CSS变量，JS实时更新 */
+      left: calc(var(--mouse-x) * 100% - 150px);
+      top: calc(var(--mouse-y) * 100% - 150px);
+      transition: left 0.8s ease-out, top 0.8s ease-out;
+    }
+
+    /* ============ 背景粒子（鼠标靠近时加速） ============ */
+    .particle {
+      position: fixed;
+      pointer-events: none;
+      background: var(--gold-dim);
+      border-radius: 1px;
+      z-index: 0;
+      /* transition让粒子平滑追踪鼠标 */
+      transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+    }
+
+    /* ============ Hero区：占满一屏 ============ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      padding: 40px 20px;
+    }
+
+    /* 主卡片 */
+    .card {
+      position: relative;
+      z-index: 10;
+      max-width: 560px;
+      width: 90%;
+      padding: 64px 56px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      /* 卡片边缘微光：跟着鼠标走 */
+      box-shadow: 0 0 80px rgba(201,169,110,0.03), 0 0 0 0px rgba(201,169,110,0);
+      transition: box-shadow 0.5s ease;
+    }
+    .card.glow {
+      box-shadow:
+        0 0 80px rgba(201,169,110,0.06),
+        0 0 0 1px rgba(201,169,110,0.12);
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 40px; height: 1px;
+      background: var(--gold);
+    }
+
+    /* 日期标签 */
+    .tag {
+      display: inline-block;
+      font-size: 11px; letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold); font-weight: 500;
+      margin-bottom: 40px;
+    }
+
+    /* 大标题 */
+    h1 {
+      font-family: 'Georgia', 'Noto Serif SC', 'SimSun', serif;
+      font-size: 64px; font-weight: 400;
+      line-height: 1.1; letter-spacing: 4px;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    h1 .accent { color: var(--gold); font-style: italic; }
+
+    /* 副标题 - 打字机光标 */
+    .subtitle {
+      font-size: 15px; color: var(--text-secondary);
+      letter-spacing: 2px; margin-bottom: 48px; font-weight: 300;
+    }
+    .subtitle .cursor-blink {
+      display: inline-block; width: 2px; height: 15px;
+      background: var(--gold); margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.8s step-end infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; } 50% { opacity: 0; }
+    }
+
+    /* 分割线 */
+    .divider { width: 60px; height: 1px; background: var(--border); margin-bottom: 36px; }
+
+    /* 祝福文字 */
+    .blessing {
+      font-size: 16px; line-height: 2.2;
+      color: var(--text-secondary);
+      margin-bottom: 40px; font-weight: 300;
+    }
+    .blessing .highlight { color: var(--gold); font-weight: 500; }
+
+    /* 按钮 */
+    .btn {
+      display: inline-block; padding: 16px 48px;
+      background: transparent; color: var(--gold);
+      border: 1px solid var(--gold-dim);
+      font-size: 14px; letter-spacing: 3px;
+      cursor: pointer; transition: all 0.4s ease;
+      text-transform: uppercase; font-family: inherit;
+      position: relative; overflow: hidden;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: var(--gold); transform: scaleX(0);
+      transform-origin: left; transition: transform 0.4s ease; z-index: -1;
+    }
+    .btn:hover { color: var(--bg-deep); border-color: var(--gold); }
+    .btn:hover::after { transform: scaleX(1); }
+
+    .footer { margin-top: 48px; font-size: 11px; color: var(--text-muted); letter-spacing: 2px; }
+
+    /* ============ 向下滚动提示箭头 ============ */
+    .scroll-hint {
+      position: absolute; bottom: 40px; left: 50%;
+      transform: translateX(-50%);
+      color: var(--text-muted); font-size: 12px;
+      letter-spacing: 3px; text-align: center;
+      animation: bounce-down 2s ease-in-out infinite;
+    }
+    @keyframes bounce-down {
+      0%,100% { transform: translateX(-50%) translateY(0); opacity: 0.4; }
+      50% { transform: translateX(-50%) translateY(12px); opacity: 1; }
+    }
+
+    /* =========================================================
+     * 第二屏："童年回忆" 翻转格子墙
+     * ========================================================= */
+    .section-memories {
+      padding: 80px 20px 120px;
+      position: relative; z-index: 1;
+    }
+    .section-title {
+      text-align: center; font-family: 'Georgia','Noto Serif SC',serif;
+      font-size: 28px; letter-spacing: 4px; color: var(--gold);
+      margin-bottom: 8px;
+    }
+    .section-sub {
+      text-align: center; font-size: 13px; color: var(--text-muted);
+      letter-spacing: 2px; margin-bottom: 60px;
+    }
+
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* 3D翻转容器 */
+    .flip-container {
+      perspective: 800px;
+      height: 180px;
+      cursor: pointer;
+    }
+    .flip-inner {
+      position: relative; width: 100%; height: 100%;
+      transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+      transform-style: preserve-3d;
+    }
+    .flip-container.flipped .flip-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-front, .flip-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .flip-front {
+      background: var(--bg-card);
+    }
+    .flip-front .memory-emoji { font-size: 42px; margin-bottom: 12px; }
+    .flip-front .memory-name { font-size: 14px; color: var(--text-secondary); letter-spacing: 2px; }
+    .flip-back {
+      background: #181d28;
+      transform: rotateY(180deg);
+      font-size: 13px; color: var(--text-secondary); line-height: 1.8;
+      text-align: center;
+    }
+    .flip-back .highlight { color: var(--gold); }
+
+    /* =========================================================
+     * 第三屏："今日特权卡"
+     * ========================================================= */
+    .section-privilege {
+      padding: 40px 20px 120px;
+      position: relative; z-index: 1;
+    }
+    .privilege-card {
+      max-width: 460px; margin: 0 auto;
+      perspective: 1000px;
+    }
+    .privilege-inner {
+      position: relative; width: 100%;
+      min-height: 320px;
+      transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);
+      transform-style: preserve-3d;
+    }
+    .privilege-card.flipped .privilege-inner {
+      transform: rotateY(180deg);
+    }
+    .privi-front, .privi-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--bg-card);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px 32px; text-align: center;
+    }
+    .privi-front { cursor: pointer; }
+    .privi-front .privi-emoji { font-size: 56px; margin-bottom: 16px; }
+    .privi-front .privi-title { font-size: 18px; color: var(--gold); letter-spacing: 4px; margin-bottom: 8px; }
+    .privi-front .privi-hint { font-size: 12px; color: var(--text-muted); letter-spacing: 2px; }
+    .privi-back {
+      transform: rotateY(180deg);
+      background: #181d28;
+      cursor: pointer;
+    }
+    .privi-back ul { list-style: none; text-align: left; margin: 20px 0; }
+    .privi-back li {
+      font-size: 14px; color: var(--text-secondary); line-height: 2.4;
+      padding-left: 20px; position: relative;
+    }
+    .privi-back li::before {
+      content: '✓'; position: absolute; left: 0;
+      color: var(--gold); font-size: 12px;
+    }
+
+    /* =========================================================
+     * 第四屏：底部祝福跑马灯 + 撒花
+     * ========================================================= */
+    .section-footer-area {
+      padding: 0 0 80px;
+      position: relative; z-index: 1;
+      overflow: hidden;
+    }
+    .marquee-wrap {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0; margin-bottom: 48px;
+      overflow: hidden;
+    }
+    .marquee-track {
+      display: flex; gap: 60px;
+      animation: scroll-left 25s linear infinite;
+      width: max-content;
+    }
+    @keyframes scroll-left {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .marquee-item {
+      font-size: 13px; color: var(--text-muted);
+      letter-spacing: 3px; white-space: nowrap;
+    }
+    .marquee-item .gold { color: var(--gold); }
+
+    .confetti-bar {
+      text-align: center;
+    }
+
+    /* 翻转提示 */
+    .flip-hint {
+      position: absolute; bottom: 8px;
+      font-size: 10px; color: var(--text-muted);
+      letter-spacing: 2px;
+    }
+
+    /* ============ 彩屑（撒花） ============ */
+    @keyframes confetti-fall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+    }
+    @keyframes confetti-fall-star {
+      0% { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(540deg) scale(0.3); opacity: 0; }
+    }
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+      animation: confetti-fall 4s ease-in forwards;
+    }
+    .confetti.star {
+      animation: confetti-fall-star 5s ease-in forwards;
+      clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+    }
+
+    /* ============ 音乐按钮 ============ */
+    .music-btn {
+      position: fixed; top: 32px; right: 32px;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 16px;
+      cursor: pointer; z-index: 100;
+      transition: all 0.3s;
+      display: flex; align-items: center; justify-content: center;
+      font-family: inherit;
+    }
+    .music-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+    .music-btn.playing {
+      border-color: var(--gold); color: var(--gold);
+      box-shadow: 0 0 20px rgba(201,169,110,0.15);
+    }
+
+    /* ============ 点击开始的遮罩提示 ============ */
+    .start-overlay {
+      position: fixed; inset: 0;
+      background: rgba(10,14,23,0.92);
+      z-index: 999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: opacity 0.5s, visibility 0.5s;
+    }
+    .start-overlay.hidden {
+      opacity: 0; visibility: hidden; pointer-events: none;
+    }
+    .start-overlay .start-emoji {
+      font-size: 56px; margin-bottom: 20px;
+      animation: float-start 2s ease-in-out infinite;
+    }
+    @keyframes float-start {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    .start-overlay .start-text {
+      font-size: 15px; color: var(--gold);
+      letter-spacing: 4px; font-family: 'PingFang SC','Microsoft YaHei',sans-serif;
+    }
+    .start-overlay .start-sub {
+      font-size: 12px; color: var(--text-muted);
+      letter-spacing: 2px; margin-top: 12px;
+    }
+
+    /* ============ 响应式 ============ */
+    @media (max-width: 768px) {
+      .card { padding: 40px 28px; }
+      h1 { font-size: 38px; letter-spacing: 2px; }
+      .blessing { font-size: 15px; }
+      .btn { padding: 14px 36px; font-size: 12px; letter-spacing: 2px; }
+      .memory-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+      .flip-container { height: 140px; }
+      .flip-front .memory-emoji { font-size: 30px; }
+      .flip-front .memory-name { font-size: 11px; }
+      .flip-back { font-size: 11px; }
+      .section-title { font-size: 22px; }
+      .marquee-item { font-size: 11px; }
+    }
+    @media (max-width: 480px) {
+      .memory-grid { grid-template-columns: repeat(2, 1fr); }
+      .card { padding: 32px 20px; }
+      h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 首次点击遮罩：浏览器拦截自动播放时的降级方案 -->
+  <div class="start-overlay" id="startOverlay">
+    <div class="start-emoji">🎵</div>
+    <div class="start-text">点 击 开 始</div>
+    <div class="start-sub">起风了 · 买辣椒也用券</div>
+  </div>
+
+  <!-- 鼠标跟随光晕 -->
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- 音乐按钮 -->
+  <button class="music-btn" id="musicBtn" title="音乐">♪</button>
+
+  <!-- 背景音乐：把起风了MP3放到同目录下，改src名字即可 -->
+  <audio id="bgMusic" preload="auto" loop>
+    <source src="qifengle.mp3" type="audio/mpeg">
+    你的浏览器不支持音频播放
+  </audio>
+
+  <!-- ==========================================
+       第一屏：Hero 主卡片
+       ========================================== -->
+  <section class="hero">
+    <div class="card" id="mainCard">
+      <div class="tag">2026 · 06 · 01 · 本人今日三岁</div>
+
+      <h1>可以<span class="accent">不长大</span><br>但不能<span class="accent">不好玩</span></h1>
+
+      <!-- 打字机效果：span#typeTarget 是逐字打印的目标 -->
+      <p class="subtitle">
+        <span id="typeTarget"></span><span class="cursor-blink"></span>
+      </p>
+
+      <div class="divider"></div>
+
+      <div class="blessing">
+        谁说大学生不能过<span class="highlight">六一</span>？<br>
+        法律规定了？辅导员规定了？还是有 bug 不让跑？<br>
+        愿你出走半生，归来仍能为一根<span class="highlight">辣条</span>开心半天。<br>
+        愿 bug 自己识趣跑路，发量雷打不动。<br>
+        编译一遍绿，控制台安静得像室友在睡觉。<br>
+        外面卷成滚筒洗衣机，<br>
+        你心里那个<span class="highlight">三岁小孩</span>，照样有糖吃。<br>
+        今天作业先放放，<span class="highlight">开心要紧</span>。
+      </div>
+
+      <button class="btn" onclick="fireConfetti(); this.textContent='糖果已签收 ✓';">
+        🍬 戳这里，领取今日份快乐
+      </button>
+
+      <p class="footer">你值得拥有的 · 六一特供 · 24小时有效 · 过期不补</p>
+    </div>
+
+    <!-- 向下滚动提示 -->
+    <div class="scroll-hint">▼ 往下翻，有惊喜 ▼</div>
+  </section>
+
+  <!-- ==========================================
+       第二屏：童年回忆 3×3 翻转格子
+       ========================================== -->
+  <section class="section-memories">
+    <div class="section-title">00后冲浪图鉴</div>
+    <div class="section-sub">点一下格子，看看你是不是真·互联网原住民</div>
+
+    <div class="memory-grid" id="memoryGrid">
+      <!-- JS动态生成，这里留空 -->
+    </div>
+  </section>
+
+  <!-- ==========================================
+       第三屏：今日特权卡
+       ========================================== -->
+  <section class="section-privilege">
+    <div class="section-title">今日特权</div>
+    <div class="section-sub">点击翻开 → 查看六一专属权益</div>
+
+    <div class="privilege-card" id="privilegeCard">
+      <div class="privilege-inner">
+        <div class="privi-front">
+          <div class="privi-emoji">🎫</div>
+          <div class="privi-title">大学生六一特权券</div>
+          <div class="privi-hint">仅限今日 · 点击翻开</div>
+        </div>
+        <div class="privi-back">
+          <div class="privi-title" style="font-size:14px;">今日你可以合法：</div>
+          <ul>
+            <li>不写作业（教授会原谅你的）</li>
+            <li>吃三根辣条不喝水</li>
+            <li>12点前不上床</li>
+            <li>装嫩到令室友忍无可忍</li>
+            <li>拒绝一切焦虑，开心到明天</li>
+            <li>把这篇转给你想宠的朋友</li>
+          </ul>
+          <div class="privi-hint">点击翻回正面</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       第四屏：底部跑马灯 + 撒花按钮
+       ========================================== -->
+  <section class="section-footer-area">
+    <div class="marquee-wrap">
+      <div class="marquee-track" id="marqueeTrack">
+        <!-- JS动态复制 -->
+      </div>
+    </div>
+
+    <div class="confetti-bar">
+      <button class="btn" onclick="fireConfetti()" style="font-size:16px; padding:18px 56px;">
+        🎉 再来一次撒花 🎉
+      </button>
+      <p style="margin-top:24px; font-size:11px; color:var(--text-muted); letter-spacing:3px;">
+        儿童节快乐 · 这不是演习 · 重复一遍 · 这不是演习
+      </p>
+    </div>
+  </section>
+
+  <script>
+    /* =========================================================
+     * 0. 全局：鼠标位置追踪（驱动光晕 + 粒子 + 卡片发光）
+     * ========================================================= */
+    const root = document.documentElement;
+    document.addEventListener('mousemove', (e) => {
+      root.style.setProperty('--mouse-x', e.clientX / window.innerWidth);
+      root.style.setProperty('--mouse-y', e.clientY / window.innerHeight);
+    });
+
+    /* 卡片靠近鼠标时发光 */
+    const mainCard = document.getElementById('mainCard');
+    document.addEventListener('mousemove', (e) => {
+      const rect = mainCard.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+      // 鼠标在卡片300px范围内 → 发光
+      if (dist < 300) {
+        mainCard.classList.add('glow');
+      } else {
+        mainCard.classList.remove('glow');
+      }
+    });
+
+    /* =========================================================
+     * 1. 打字机效果
+     * ========================================================= */
+    const targetText = '致每一个「今天爷要过节，天王老子来了也不好使」的你';
+    const typeEl = document.getElementById('typeTarget');
+    let charIndex = 0;
+
+    function typeNext() {
+      if (charIndex < targetText.length) {
+        typeEl.textContent += targetText[charIndex];
+        charIndex++;
+        // 随机速度50~120ms，模拟真人打字
+        setTimeout(typeNext, 50 + Math.random() * 70);
+      }
+    }
+    // 页面加载后0.5秒开始打字
+    setTimeout(typeNext, 500);
+
+    /* =========================================================
+     * 2. 鼠标互动粒子（靠近鼠标时被吸引）
+     * ========================================================= */
+    const particles = [];
+    for (let i = 0; i < 25; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 1.5 + Math.random() * 2;
+      // 记录每个粒子的"家"（初始位置）
+      p._homeX = Math.random() * 100;
+      p._homeY = 100 + Math.random() * 20;
+      p._speed = 12 + Math.random() * 18; // 上升速度
+      p._phase = Math.random() * Math.PI * 2;
+      p.style.cssText = `
+        left: ${p._homeX}vw;
+        top: ${p._homeY}vh;
+        width: ${size}px; height: ${size * 4}px;
+        opacity: ${0.2 + Math.random() * 0.3};
+      `;
+      document.body.appendChild(p);
+      particles.push(p);
+    }
+
+    function updateParticles() {
+      const mx = parseFloat(root.style.getPropertyValue('--mouse-x')) * 100;
+      const my = parseFloat(root.style.getPropertyValue('--mouse-y')) * 100;
+
+      const now = performance.now() / 1000;
+      particles.forEach((p, i) => {
+        // 基础运动：缓慢上升 + 正弦摇摆
+        const baseY = p._homeY - ((now * 8 + i * 12) % 120); // 循环上升
+        const baseX = p._homeX + Math.sin(now * 0.3 + i) * 3;
+
+        // 粒子当前位置（屏幕百分比）
+        const px = parseFloat(p.style.left);
+        const py = parseFloat(p.style.top);
+
+        // 到鼠标的距离
+        const dx = mx - px;
+        const dy = my - py;
+        const dist = Math.hypot(dx, dy);
+
+        let tx, ty;
+        if (dist < 30) {
+          // 鼠标很近 → 被吸引，朝鼠标靠近一点点
+          tx = px + dx * 0.05;
+          ty = py + dy * 0.05;
+        } else {
+          // 鼠标远 → 回到原始位置
+          tx = baseX;
+          ty = baseY;
+        }
+        p.style.left = tx + 'vw';
+        p.style.top = ty + 'vh';
+        // 靠近鼠标时变亮
+        p.style.opacity = dist < 30 ? 0.7 : 0.2 + Math.random() * 0.15;
+      });
+      requestAnimationFrame(updateParticles);
+    }
+    requestAnimationFrame(updateParticles);
+
+    /* =========================================================
+     * 3. 童年回忆格子（3×3 翻转卡片）
+     * ========================================================= */
+    const memories = [
+      { emoji:'🐴', name:'吗喽', back:'<span class="highlight">吗喽的命也是命</span>，早八人早八魂，这学上得跟演动物世界似的' },
+      { emoji:'🫠', name:'尊嘟假嘟', back:'2023霸屏热搜，<span class="highlight">"尊嘟假嘟O.o"</span>，现在说出口自己都觉得好笑' },
+      { emoji:'💀', name:'CPU干烧了', back:'一道题算三遍三个答案，<span class="highlight">CPU直接冒烟</span>，汗流浃背了吧老弟' },
+      { emoji:'🐟', name:'摸鱼', back:'上课摸鱼是<span class="highlight">大学生的必修课</span>，分屏技巧比专业课学得还精' },
+      { emoji:'🎭', name:'i人/e人', back:'"你是i人还是e人？" <span class="highlight">MBTI已经取代星座</span>，成为社交第一话题' },
+      { emoji:'🛌', name:'摆烂', back:'<span class="highlight">努力不一定成功</span>，但不努力一定很舒服。躺平2.0，懂得都懂' },
+      { emoji:'🎪', name:'显眼包', back:'每个班都有一个<span class="highlight">显眼包</span>，上课接话、朋友圈发疯文学、永远C位' },
+      { emoji:'📱', name:'电子榨菜', back:'吃饭不看视频等于<span class="highlight">白吃</span>，B站/抖音/综艺是当代大学生的下饭三件套' },
+      { emoji:'🤡', name:'小丑竟是我自己', back:'深夜复盘今天的社死瞬间，<span class="highlight">小丑竟是我自己</span>，没事明天继续' },
+    ];
+
+    const grid = document.getElementById('memoryGrid');
+    memories.forEach((m) => {
+      const container = document.createElement('div');
+      container.className = 'flip-container';
+      container.addEventListener('click', () => container.classList.toggle('flipped'));
+      container.innerHTML = `
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div class="memory-emoji">${m.emoji}</div>
+            <div class="memory-name">${m.name}</div>
+            <div class="flip-hint">点我</div>
+          </div>
+          <div class="flip-back">${m.back}</div>
+        </div>
+      `;
+      grid.appendChild(container);
+    });
+
+    /* =========================================================
+     * 4. 特权卡翻转
+     * ========================================================= */
+    const priviCard = document.getElementById('privilegeCard');
+    priviCard.addEventListener('click', () => priviCard.classList.toggle('flipped'));
+
+    /* =========================================================
+     * 5. 底部跑马灯
+     * ========================================================= */
+    const marqueeItems = [
+      '愿你永远是自己的小朋友', 'bug退散，好运进门', '编译一次过',
+      '今天不卷，快乐第一', '辣条自由，头发浓密', '童心未泯，所遇皆甜',
+      '别装了，你才三岁', '保持可爱，保持好奇', '作业先放放',
+    ];
+    const marqueeTrack = document.getElementById('marqueeTrack');
+    // 复制两份实现无缝滚动
+    const itemsHTML = marqueeItems
+      .map((text, i) => `<span class="marquee-item">${i % 2 === 0 ? '<span class="gold">✦</span>' : '·'} ${text}</span>`)
+      .join('');
+    marqueeTrack.innerHTML = itemsHTML + itemsHTML; // 两份连在一起
+
+    /* =========================================================
+     * 6. 彩屑（升级版：星星 + 长条混合）
+     * ========================================================= */
+    function fireConfetti() {
+      const colors = ['#c9a96e','#d4b87a','#b89a5e','#e8d5b0',
+                      '#a0845c','#dac29c','#f0e0c8','#8b7e6a'];
+      // 长条形彩屑
+      for (let i = 0; i < 40; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.cssText = `
+          left: ${10 + Math.random() * 80}%;
+          top: -20px;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          width: ${1.5 + Math.random() * 3}px;
+          height: ${8 + Math.random() * 20}px;
+          animation-duration: ${3 + Math.random() * 4}s;
+          animation-delay: ${Math.random() * 0.6}s;
+        `;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 5000);
+      }
+      // 星形彩屑
+      for (let i = 0; i < 20; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti star';
+        const size = 8 + Math.random() * 16;
+        el.style.cssText = `
+          left: ${15 + Math.random() * 70}%;
+          top: -20px;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          width: ${size}px; height: ${size}px;
+          animation-duration: ${4 + Math.random() * 4}s;
+          animation-delay: ${Math.random() * 0.3}s;
+        `;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 5500);
+      }
+    }
+
+    /* =========================================================
+     * 7. 背景音乐（起风了 · <audio>标签播放本地MP3）
+     * ========================================================= */
+    let musicPlaying = true;
+    const musicBtn = document.getElementById('musicBtn');
+    const bgMusic = document.getElementById('bgMusic');
+    const startOverlay = document.getElementById('startOverlay');
+
+    function updateUI() { musicBtn.classList.toggle('playing', musicPlaying); }
+
+    function start() {
+      bgMusic.play().then(() => {
+        musicPlaying = true; updateUI();
+        startOverlay.classList.add('hidden'); // 播放成功，隐藏遮罩
+      }).catch(() => {
+        musicPlaying = true; updateUI();
+        startOverlay.classList.remove('hidden'); // 失败了，显示遮罩提示点击
+      });
+    }
+
+    function stop() {
+      bgMusic.pause();
+      musicPlaying = false; updateUI();
+    }
+
+    // 页面加载时尝试自动播放
+    bgMusic.volume = 0.3;
+    updateUI();
+    bgMusic.play().then(() => {
+      // 自动播放成功！
+      updateUI();
+      startOverlay.classList.add('hidden');
+      // 从头开始放
+      bgMusic.currentTime = 0;
+    }).catch(() => {
+      // 浏览器拦截了自动播放 → 显示"点击开始"遮罩
+      musicPlaying = true; updateUI();
+      startOverlay.classList.remove('hidden');
+    });
+
+    // 点击页面任意位置（包括遮罩）：隐藏遮罩 + 开始播放
+    document.addEventListener('click', () => {
+      startOverlay.classList.add('hidden');
+      if (bgMusic.paused && musicPlaying) {
+        bgMusic.play().then(() => updateUI()).catch(() => {});
+      }
+    });
+
+    // 音乐按钮手动切换
+    musicBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startOverlay.classList.add('hidden');
+      if (musicPlaying) {
+        stop();
+      } else {
+        start();
+      }
+    });
+
+    // 歌曲播完自动循环
+    bgMusic.addEventListener('ended', () => {
+      bgMusic.currentTime = 0;
+      if (musicPlaying) bgMusic.play();
+    });
+  </script>
+</body>
+</html>

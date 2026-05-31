@@ -1,0 +1,32 @@
+// ==========================================
+// 翁恺《C语言程序设计入门》3.2.1 嵌套的if-else
+// 问题：从三个数 a、b、c 中找出最大值
+// ==========================================
+
+#include <stdio.h>
+
+int main()
+{
+    int a, b, c;
+    int max;
+
+    scanf("%d %d %d", &a, &b, &c);
+
+    if (a > b)
+    {
+        if (a > c)
+            max = a;
+        else
+            max = c;
+    }
+    else
+    {
+        if (b > c)
+            max = b;
+        else
+            max = c;
+    }
+
+    printf("最大值是：%d\n", max);
+    return 0;
+}

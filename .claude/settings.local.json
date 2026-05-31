@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /c/Users/boboli/AppData/Local/npm-cache/_npx/bbec123aa0f936d0/node_modules/@flitzrrr/frontend-design-skills/ 2>&1)",
+      "Read(//c/Users/boboli/AppData/Local/npm-cache/_npx/bbec123aa0f936d0/node_modules/@flitzrrr/frontend-design-skills//**)",
+      "Read(//c/Users/boboli/AppData/Local/npm-cache/_npx/bbec123aa0f936d0/node_modules/@flitzrrr/frontend-design-skills/**)",
+      "Bash(npx skills *)",
+      "Bash(npx vercel *)"
+    ]
+  }
+}

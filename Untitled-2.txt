@@ -1,0 +1,365 @@
+/*
+ * ============================================================
+ *  方式一：C 语言版 - 直接打印 HTML 网页（控制台 CGI 风格）
+ *  编译：gcc childrens_day.c -o childrens_day
+ *  运行：./childrens_day > index.html  或直接输出到浏览器
+ * ============================================================
+ */
+#include <stdio.h>
+
+int main()
+{
+    printf("Content-Type: text/html; charset=utf-8\n\n");  /* CGI 头部 */
+
+    printf("<!DOCTYPE html>\n");
+    printf("<html lang=\"zh-CN\">\n");
+    printf("<head>\n");
+    printf("  <meta charset=\"UTF-8\">\n");
+    printf("  <title>六一快乐！大学生专属</title>\n");
+    printf("  <style>\n");
+    printf("    * { margin: 0; padding: 0; box-sizing: border-box; }\n");
+    printf("    body {\n");
+    printf("      min-height: 100vh;\n");
+    printf("      background: linear-gradient(135deg, #ff9a9e 0%%, #fad0c4 30%%, #fbc2eb 60%%, #a6c1ee 100%%);\n");
+    printf("      display: flex;\n");
+    printf("      justify-content: center;\n");
+    printf("      align-items: center;\n");
+    printf("      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;\n");
+    printf("      overflow-x: hidden;\n");
+    printf("    }\n");
+    printf("    /* 漂浮的气泡 */\n");
+    printf("    @keyframes float {\n");
+    printf("      0%%, 100%% { transform: translateY(0px) rotate(0deg); }\n");
+    printf("      50%% { transform: translateY(-30px) rotate(5deg); }\n");
+    printf("    }\n");
+    printf("    .bubble {\n");
+    printf("      position: absolute;\n");
+    printf("      border-radius: 50%%;\n");
+    printf("      opacity: 0.6;\n");
+    printf("      animation: float 4s ease-in-out infinite;\n");
+    printf("      pointer-events: none;\n");
+    printf("    }\n");
+    printf("    .card {\n");
+    printf("      background: rgba(255,255,255,0.85);\n");
+    printf("      backdrop-filter: blur(20px);\n");
+    printf("      border-radius: 30px;\n");
+    printf("      padding: 50px 60px;\n");
+    printf("      text-align: center;\n");
+    printf("      box-shadow: 0 20px 60px rgba(0,0,0,0.15);\n");
+    printf("      z-index: 10;\n");
+    printf("      max-width: 600px;\n");
+    printf("      width: 90%%;\n");
+    printf("    }\n");
+    printf("    h1 { font-size: 3em; color: #ff6b6b; margin-bottom: 10px; }\n");
+    printf("    .subtitle { font-size: 1.2em; color: #888; margin-bottom: 30px; }\n");
+    printf("    .blessing { font-size: 1.1em; color: #555; line-height: 2; margin-bottom: 25px; }\n");
+    printf("    .emoji-row { font-size: 2.5em; margin: 20px 0; letter-spacing: 8px; }\n");
+    printf("    .btn {\n");
+    printf("      display: inline-block;\n");
+    printf("      padding: 14px 40px;\n");
+    printf("      background: linear-gradient(135deg, #ff6b6b, #ff8e53);\n");
+    printf("      color: #fff;\n");
+    printf("      border: none;\n");
+    printf("      border-radius: 50px;\n");
+    printf("      font-size: 1.1em;\n");
+    printf("      cursor: pointer;\n");
+    printf("      transition: transform 0.2s, box-shadow 0.2s;\n");
+    printf("    }\n");
+    printf("    .btn:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(255,107,107,0.4); }\n");
+    printf("    .footer { color: #aaa; font-size: 0.85em; margin-top: 30px; }\n");
+    printf("  </style>\n");
+    printf("</head>\n");
+    printf("<body>\n");
+
+    /* 漂浮气泡 */
+    char *colors[] = {"#ff6b6b", "#ffd93d", "#6bcb77", "#4d96ff", "#ff922b", "#cc5de8"};
+    int i;
+    for (i = 0; i < 12; i++)
+    {
+        printf("  <div class=\"bubble\" style=\"left:%d%%; top:%d%%; width:%dpx; height:%dpx; "
+               "background:%s; animation-delay:%.1fs;\"></div>\n",
+               rand() % 90, rand() % 90, 20 + rand() % 60, 20 + rand() % 60,
+               colors[rand() % 6], (rand() % 40) / 10.0);
+    }
+
+    /* 主体卡片 */
+    printf("  <div class=\"card\">\n");
+    printf("    <div class=\"emoji-row\">🎈🎠🍭🎪🎡🎢</div>\n");
+    printf("    <h1>六·一快乐！</h1>\n");
+    printf("    <p class=\"subtitle\">—— 致永远 18 岁的大学生 ——</p>\n");
+    printf("    <div class=\"blessing\">\n");
+    printf("      谁说大学生不能过六一？<br>\n");
+    printf("      愿你走出半生，归来仍是少年。<br>\n");
+    printf("      bug 每天少一点，头发每天多一点。<br>\n");
+    printf("      编译一次过，运行不报错。<br>\n");
+    printf("      考试全会，蒙的全对！<br>\n");
+    printf("      这个世界吵吵闹闹，<br>\n");
+    printf("      但你永远是自己的小朋友🧒\n");
+    printf("    </div>\n");
+    printf("    <button class=\"btn\" onclick=\"alert('祝你六一快乐！🏆')\">🎁 领取今日快乐</button>\n");
+    printf("    <p class=\"footer\">Powered by  C语言  ·  printf 逐行硬核输出  ·  %d年六一</p>\n", 2026);
+    printf("  </div>\n");
+    printf("</body>\n");
+    printf("</html>\n");
+
+    return 0;
+}
+
+
+/* ============================================================
+ *  方式二：Python 版 - 一键启动 HTTP 服务器，浏览器直接访问
+ *  运行：python childrens_day.py
+ *  然后打开浏览器访问 http://localhost:861
+ *  祝语通过 Python 列表随机切换，每次刷新都不一样
+ * ============================================================
+ */
+import http.server
+import socketserver
+import random
+import webbrowser
+import os
+
+PORT = 861  # 6月1日 → 861
+
+BLESSINGS = [
+    "bug 每天少一点，头发每天多一点 🧑‍💻",
+    "编译一次过，运行不报错 ✅",
+    "考试全会，蒙的全对 📝",
+    "世界催你长大，代码让你永远是少年 🌟",
+    "今天不当卷王，今天当小朋友 🎠",
+    "愿你 debug 的速度快过头秃的速度 💪",
+    "六一快乐！你是最棒的程序员宝宝 👶",
+    "保持好奇，保持天真，保持对世界的热爱 ❤️",
+]
+
+HTML_TEMPLATE = '''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>六一快乐！大学生专属</title>
+  <style>
+    * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+    body {{
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 30%, #fbc2eb 60%, #a6c1ee 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      overflow: hidden;
+    }}
+    @keyframes float {{
+      0%, 100% {{ transform: translateY(0px) rotate(0deg); }}
+      50% {{ transform: translateY(-30px) rotate(5deg); }}
+    }}
+    @keyframes confetti-fall {{
+      0% {{ transform: translateY(-100vh) rotate(0deg); opacity: 1; }}
+      100% {{ transform: translateY(100vh) rotate(720deg); opacity: 0; }}
+    }}
+    .bubble {{
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.5;
+      animation: float 4s ease-in-out infinite;
+      pointer-events: none;
+    }}
+    .confetti {{
+      position: absolute;
+      width: 10px;
+      height: 20px;
+      border-radius: 3px;
+      animation: confetti-fall 3s linear infinite;
+      pointer-events: none;
+    }}
+    .card {{
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(20px);
+      border-radius: 30px;
+      padding: 50px 60px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      z-index: 10;
+      max-width: 620px;
+      width: 90%;
+    }}
+    h1 {{
+      font-size: 3em;
+      background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }}
+    .subtitle {{ font-size: 1.1em; color: #999; margin-bottom: 25px; }}
+    .blessing {{
+      font-size: 1.15em;
+      color: #555;
+      line-height: 2.2;
+      margin-bottom: 20px;
+      background: rgba(255,107,107,0.08);
+      border-radius: 15px;
+      padding: 20px;
+    }}
+    .random-bless {{
+      display: inline-block;
+      background: linear-gradient(135deg, #ffd93d, #ff922b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+      font-size: 1.3em;
+    }}
+    .emoji-row {{ font-size: 2.5em; margin: 15px 0; letter-spacing: 8px; }}
+    .btn {{
+      display: inline-block;
+      padding: 14px 40px;
+      background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+    }}
+    .btn:hover {{ transform: scale(1.05); box-shadow: 0 10px 30px rgba(255,107,107,0.4); }}
+    .footer {{ color: #aaa; font-size: 0.85em; margin-top: 25px; }}
+    .code-badge {{
+      display: inline-block;
+      background: #333;
+      color: #0f0;
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8em;
+      margin: 0 3px;
+    }}
+  </style>
+</head>
+<body>
+  <!-- 动态生成彩屑 -->
+  {confetti}
+
+  <!-- 动态生成气泡 -->
+  {bubbles}
+
+  <div class="card">
+    <div class="emoji-row">🎈🎠🍭🎪🎡🎢</div>
+    <h1>六·一快乐！</h1>
+    <p class="subtitle">—— 致永远 18 岁的大学生 ——</p>
+    <div class="blessing">
+      <p>谁说大学生不能过六一？</p>
+      <p>愿你走出半生，归来仍是少年。</p>
+      <p class="random-bless">✨ {random_bless} ✨</p>
+      <p>这个世界吵吵闹闹，</p>
+      <p>但你永远是自己的小朋友 🧒</p>
+    </div>
+    <button class="btn" onclick="fireConfetti()">🎁 戳我领糖</button>
+    <p class="footer">
+      <span class="code-badge">C</span>
+      <span class="code-badge">Python</span>
+      Made with ❤️  ·  {year} 六一  ·  第 {visit} 位小朋友来访 🍬
+    </p>
+  </div>
+
+  <script>
+    // 点击按钮撒彩屑
+    function fireConfetti() {{
+      const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#ff9a9e'];
+      for (let i = 0; i < 80; i++) {{
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.left = Math.random() * 100 + '%';
+        el.style.top = -(Math.random() * 30) + 'px';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.width = (8 + Math.random() * 14) + 'px';
+        el.style.height = (12 + Math.random() * 22) + 'px';
+        el.style.animationDuration = (2 + Math.random() * 3) + 's';
+        el.style.animationDelay = Math.random() * 0.5 + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+      }}
+      alert('🍭 糖已发放！六一快乐，今天你是全世界最可爱的小朋友！');
+    }}
+  </script>
+</body>
+</html>'''
+
+
+def generate_confetti(count=30):
+    """生成随机位置的彩屑 HTML"""
+    colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff922b', '#cc5de8']
+    html_parts = []
+    for i in range(count):
+        c = random.choice(colors)
+        left = random.randint(0, 100)
+        delay = round(random.random() * 3, 1)
+        dur = round(2.5 + random.random() * 3, 1)
+        html_parts.append(
+            f'<div class="confetti" style="left:{left}%; background:{c}; '
+            f'animation-delay:{delay}s; animation-duration:{dur}s;"></div>'
+        )
+    return '\n  '.join(html_parts)
+
+
+def generate_bubbles(count=10):
+    """生成随机位置的气泡 HTML"""
+    colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff922b', '#cc5de8']
+    html_parts = []
+    for i in range(count):
+        c = random.choice(colors)
+        left = random.randint(0, 90)
+        top = random.randint(0, 90)
+        size = random.randint(25, 80)
+        delay = round(random.random() * 4, 1)
+        html_parts.append(
+            f'<div class="bubble" style="left:{left}%; top:{top}%; '
+            f'width:{size}px; height:{size}px; background:{c}; '
+            f'animation-delay:{delay}s;"></div>'
+        )
+    return '\n  '.join(html_parts)
+
+
+class ChildrensDayHandler(http.server.SimpleHTTPRequestHandler):
+    """六一祝福页面请求处理"""
+    visit_count = 0
+
+    def do_GET(self):
+        ChildrensDayHandler.visit_count += 1
+        html = HTML_TEMPLATE.format(
+            confetti=generate_confetti(30),
+            bubbles=generate_bubbles(10),
+            random_bless=random.choice(BLESSINGS),
+            year=2026,
+            visit=ChildrensDayHandler.visit_count,
+        )
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", len(html.encode('utf-8')))
+        self.end_headers()
+        self.wfile.write(html.encode('utf-8'))
+
+    def log_message(self, format, *args):
+        """美化控制台日志"""
+        emojis = ['🎈', '🎠', '🍭', '🎪', '🎡', '🎢']
+        print(f"  {random.choice(emojis)} [{self.log_date_time_string()}] {args[0]}")
+
+
+if __name__ == '__main__':
+    print()
+    print("  ╔══════════════════════════════════════╗")
+    print("  ║     🎈  六一儿童节快乐！🎈          ║")
+    print("  ║                                      ║")
+    print("  ║   🌐 服务已启动：                     ║")
+    print(f"  ║   http://localhost:{PORT}               ║")
+    print("  ║                                      ║")
+    print("  ║   按 Ctrl+C 停止服务                 ║")
+    print("  ╚══════════════════════════════════════╝")
+    print()
+
+    with socketserver.TCPServer(("", PORT), ChildrensDayHandler) as httpd:
+        webbrowser.open(f"http://localhost:{PORT}")
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\n\n  👋 再见！今天也要开心呀～\n")
