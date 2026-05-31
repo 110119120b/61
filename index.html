@@ -414,10 +414,10 @@
 <body>
 
   <!-- 首次点击遮罩：手机浏览器必须用户手动点一下才能播 -->
-  <div class="start-overlay" id="startOverlay" onclick="event.stopPropagation(); document.getElementById('bgMusic').play().then(()=>{this.classList.add('hidden');document.getElementById('musicBtn').classList.add('playing');}).catch(()=>{this.querySelector('.start-text').textContent='加载中…稍等再点';});">
+  <div class="start-overlay" id="startOverlay">
     <div class="start-emoji">🎵</div>
     <div class="start-text">点 击 开 始 播 放</div>
-    <div class="start-sub">起风了 · 买辣椒也用券 · <span id="loadHint">点击后等几秒加载</span></div>
+    <div class="start-sub">起风了 · 八音盒版</div>
   </div>
 
   <!-- 鼠标跟随光晕 -->
@@ -425,11 +425,6 @@
 
   <!-- 音乐按钮 -->
   <button class="music-btn" id="musicBtn" title="音乐">♪</button>
-
-  <!-- 背景音乐：playsinline是iOS必须的，preload=none省流量 -->
-  <audio id="bgMusic" preload="none" loop playsinline webkit-playsinline>
-    <source src="qifengle.mp3" type="audio/mpeg">
-  </audio>
 
   <!-- ==========================================
        第一屏：Hero 主卡片
@@ -732,44 +727,99 @@
     /* =========================================================
      * 7. 背景音乐（起风了 · 手机端必须用户主动点击才能播）
      * ========================================================= */
-    let musicPlaying = true;
+    /* =========================================================
+     * 7. 背景音乐：起风了 · 八音盒版（Web Audio API纯代码合成）
+     *    零音频文件，秒播不卡
+     * ========================================================= */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let musicPlaying = true, melodyTimer = null;
     const musicBtn = document.getElementById('musicBtn');
-    const bgMusic = document.getElementById('bgMusic');
     const startOverlay = document.getElementById('startOverlay');
 
+    /* 起风了 副歌 */
+    const melody = [
+      [330,0.4],[330,0.4],[392,0.4],[392,0.4],
+      [440,0.4],[392,0.4],[330,0.4],[294,0.4],
+      [262,0.4],[294,0.4],[330,0.4],[262,0.4],
+      [294,0.4],[330,0.4],[392,0.8],
+      [440,0.4],[440,0.4],[523,0.4],[523,0.4],
+      [494,0.4],[440,0.4],[392,0.4],[440,0.4],
+      [392,0.4],[330,0.4],[294,0.4],[330,0.8],
+      [262,1.0],
+    ];
+
     function updateUI() { musicBtn.classList.toggle('playing', musicPlaying); }
-    bgMusic.volume = 0.3;
+
+    /* 播一个八音盒音符：三角波基音 + 高八度泛音 = 叮咚感 */
+    function playNote(freq, startTime, duration) {
+      // 主音：三角波（比正弦更接近金属簧片）
+      const o1 = audioCtx.createOscillator();
+      const g1 = audioCtx.createGain();
+      o1.type = 'triangle';
+      o1.frequency.value = freq;
+      g1.gain.setValueAtTime(0.25, startTime);
+      g1.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      o1.connect(g1); g1.connect(audioCtx.destination);
+      o1.start(startTime); o1.stop(startTime + duration);
+
+      // 高八度泛音（2倍频率），音量减半，制造"叮"的回响
+      const o2 = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o2.type = 'sine';
+      o2.frequency.value = freq * 2.001; // 微偏2倍频，模拟金属泛音
+      g2.gain.setValueAtTime(0.08, startTime);
+      g2.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.6);
+      o2.connect(g2); g2.connect(audioCtx.destination);
+      o2.start(startTime); o2.stop(startTime + duration * 0.6);
+    }
+
+    function playMelody() {
+      if (!musicPlaying || audioCtx.state !== 'running') return;
+      let t = audioCtx.currentTime;
+      melody.forEach(([f, d]) => { playNote(f, t, d * 0.85); t += d; });
+      melodyTimer = setTimeout(playMelody, (melody.reduce((s, [, d]) => s + d, 0) + 2) * 1000);
+    }
+
+    function start() {
+      audioCtx.resume();
+      musicPlaying = true; updateUI();
+      startOverlay.classList.add('hidden');
+      clearTimeout(melodyTimer); playMelody();
+    }
+    function stop() { musicPlaying = false; clearTimeout(melodyTimer); updateUI(); }
+
     updateUI();
 
-    // 桌面端尝试自动播放（大概率被拦）
-    bgMusic.play().then(() => {
-      updateUI();
+    // 尝试自动播放（桌面端可能成功）
+    audioCtx.resume().then(() => {
       startOverlay.classList.add('hidden');
-    }).catch(() => {
-      // 被拦：遮罩保持可见，用户点了才能播
-    });
+      playMelody();
+    }).catch(() => {});
 
-    // 音乐按钮手动开关
-    musicBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (musicPlaying) {
-        bgMusic.pause();
-        musicPlaying = false; updateUI();
-      } else {
-        startOverlay.classList.add('hidden');
-        bgMusic.play().then(() => { musicPlaying = true; updateUI(); }).catch(() => {});
+    // 点击任意位置：隐藏遮罩 + 开始播放（手机端必经之路）
+    document.addEventListener('click', () => {
+      startOverlay.classList.add('hidden');
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => { if (musicPlaying) playMelody(); });
       }
     });
-    // 手机端touch事件
-    musicBtn.addEventListener('touchend', (e) => {
-      e.stopPropagation(); e.preventDefault();
-      musicBtn.click();
+    document.addEventListener('touchend', () => {
+      startOverlay.classList.add('hidden');
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => { if (musicPlaying) playMelody(); });
+      }
     });
 
-    // 歌曲播完循环
-    bgMusic.addEventListener('ended', () => {
-      bgMusic.currentTime = 0;
-      if (musicPlaying) bgMusic.play();
+    // 音乐按钮
+    musicBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startOverlay.classList.add('hidden');
+      musicPlaying ? stop() : start();
+    });
+    musicBtn.addEventListener('touchend', (e) => {
+      e.stopPropagation(); e.preventDefault();
+      startOverlay.classList.add('hidden');
+      musicPlaying ? stop() : start();
     });
   </script>
 </body>
